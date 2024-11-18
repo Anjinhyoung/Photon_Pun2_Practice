@@ -4,12 +4,15 @@ using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
 using System.Reflection;
-// using UnityEditor.Timeline;
 using System;
 
 public class ConnectionManager : MonoBehaviourPunCallbacks
 {
+    public GameObject roomPrefab;
+    public Transform scrollContent;
+    public GameObject[] panelList;
 
+    List<RoomInfo> cachedRoomList = new List<RoomInfo>();
     void Start()
     {
         // Unity에서 화면 해상도와 전체 화면 모드를 설정하는 함수
@@ -92,12 +95,19 @@ public class ConnectionManager : MonoBehaviourPunCallbacks
 
     public void JoinRoom()
     {
-        string roomName = LobbyUIController.lobbyUI.roomSetting[0].text;
+        // Join  관련 패널을 활성화한다.
+        ChangePanel(1, 2);
+    }
 
-        if(roomName.Length > 0)
-        {
-            PhotonNetwork.JoinRoom(roomName); // 만들어진 방에 들어가는 함수
-        }
+    /// <summary>
+    /// 패널의 패턴 변경
+    /// </summary>
+    /// <param name="offIndex">꺼야될 패널 인덱스</param>
+    /// <param name="onIndex">켜야될 패널 인덱스</param>
+    void ChangePanel(int offIndex, int onIndex)
+    {
+        panelList[offIndex].SetActive(false);
+        panelList[onIndex].SetActive(true);
     }
 
 
@@ -149,6 +159,55 @@ public class ConnectionManager : MonoBehaviourPunCallbacks
 
         string playerMsg = $"{otherPlayer.NickName} 님이 퇴장하셨습니다.";
         LobbyUIController.lobbyUI.PrintLog(playerMsg);
+    }
+
+    // 현재 로비에서 룸의 변경사항을 알려주는 콜백 함수(진짜 딱 변경된 것만 알려줘)
+    public override void OnRoomListUpdate(List<RoomInfo> roomList)
+    {
+        base.OnRoomListUpdate(roomList);
+
+        foreach(RoomInfo room in roomList)
+        {
+            // 만일, 갱신된 룸 정보가 제거 리스트에 있다면...
+            if (room.RemovedFromList)
+            {
+                // cachedRoomList에서 해당 룸을 제거한다.
+                cachedRoomList.Remove(room);
+            }
+            // 그렇지 않다면...
+            else
+            {
+                // 만일, 이미 cachedRoomList에 있는 방이라면...
+                if (cachedRoomList.Contains(room))
+                {
+                    // 기존 룸 정보를 제거한다.
+                    cachedRoomList.Remove(room);
+                }
+                // 새 룸을 cachedRoomList에 추가한다.
+                cachedRoomList.Add(room);
+            }
+
+        }
+
+        // 기존의 모든 방 정보를 삭제한다. 
+        for(int i = 0; i < scrollContent.childCount; i++)
+        {
+            Destroy(scrollContent.GetChild(i).gameObject);
+        }
+
+        foreach(RoomInfo room in cachedRoomList)
+        {
+            // cachedRoomList에 있는 모든 방을 만들어서 스크롤뷰에 추가한다.
+            GameObject go = Instantiate(roomPrefab, scrollContent);
+            // go.GetComponent<RoomPanel>().SetRoomInfo(room);     //  이렇게 하면 변수가 필요없다. 당연하지 그냥 함수만 필요한 건데 함수를 변수처럼 하는 델리게이트가 꼭 필요 없잖아
+            RoomPanel roomPanel = go.GetComponent<RoomPanel>();
+            roomPanel.SetRoomInfo(room);
+            // 버튼에 방 입장 기능 연결하기
+            roomPanel.btn_join.onClick.AddListener(() =>
+            {
+                PhotonNetwork.JoinRoom(room.Name);
+            });
+        }
     }
 
 }
