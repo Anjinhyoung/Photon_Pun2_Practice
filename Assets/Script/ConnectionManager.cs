@@ -5,6 +5,8 @@ using Photon.Pun;
 using Photon.Realtime;
 using System.Reflection;
 using System;
+using ExitGames.Client.Photon; 
+using Hashtable = ExitGames.Client.Photon.Hashtable; // photon hashtable로 강제
 
 public class ConnectionManager : MonoBehaviourPunCallbacks
 {
@@ -88,6 +90,15 @@ public class ConnectionManager : MonoBehaviourPunCallbacks
             roomOpt.MaxPlayers = playerCount;
             roomOpt.IsOpen = true;
             roomOpt.IsVisible = true; // 누군가가  내 방을  검색할 수 있게 하느냐
+
+            // 룸의 커스텀 정보를 추가한다.
+            roomOpt.CustomRoomPropertiesForLobby = new string[] { "Master_NAME" , "PASSWORD"}; // 키를 등록해야 한다.
+
+            // 키에 맞는 해시 테이블 추가하기.
+            Hashtable roomTable = new Hashtable();
+            roomTable.Add("Master_NAME", PhotonNetwork.NickName);
+            roomTable.Add("PASSWORD",  1234);
+            roomOpt.CustomRoomProperties = roomTable;
 
             PhotonNetwork.CreateRoom(roomName , roomOpt, TypedLobby.Default); // 방을 만드는 함수
         }

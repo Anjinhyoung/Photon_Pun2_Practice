@@ -14,6 +14,7 @@ public class RoomPanel : MonoBehaviour
     {
         room_Text[0].text = room.Name;
         room_Text[1].text = $"({room.PlayerCount} / {room.MaxPlayers})";
-        room_Text[2].text = "JinHyoung";
+        string masterName = room.CustomProperties["Master_NAME"].ToString();
+        room_Text[2].text = masterName;
     }
 }
