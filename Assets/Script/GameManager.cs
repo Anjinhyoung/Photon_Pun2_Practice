@@ -2,9 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
+using Photon.Realtime;
+using TMPro;
 
 public class GameManager : MonoBehaviourPun
 {
+
+    public TMP_Text text_playerList;
+
     void Start()
     {
         //  코루틴을 사용하면 yield return을 통해 조건이 충족될 때까지 실행을 일시 중지할 수 있어서 코드의 흐름을 중단시키지 않고 비동기적으로 기다릴 수 있습니다.
@@ -30,6 +35,31 @@ public class GameManager : MonoBehaviourPun
 
     void Update()
     {
-        
+        Dictionary<int, Player> playerDict = PhotonNetwork.CurrentRoom.Players;
+
+        List<string> playerNames = new List<string>();
+
+        string masterName = "";
+
+        foreach(KeyValuePair<int, Player> player in playerDict)
+        {
+            if (player.Value.IsMasterClient)
+            {
+                masterName = player.Value.NickName;
+            }
+
+            else
+            {
+                playerNames.Add(player.Value.NickName);
+            }
+        }
+        playerNames.Sort();
+
+
+        text_playerList.text = masterName + "\n";
+        foreach (string name in playerNames)
+        {
+            text_playerList.text += name + "\n";
+        }
     }
 }

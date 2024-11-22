@@ -2,34 +2,50 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using System;
 
-public class PlayerMove : MonoBehaviour,IPunObservable // i는 인터페이스니까 여기서 구현하고 있는 함수를 구현해야  한다.
+public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// i는 인터페이스니까 여기서 구현하고 있는 함수를 구현해야  한다. 
 {
 
     public float trackingSpeed = 3;
+    PlayerUI healthUI;
+    public Vector3 shakePower;
 
     CharacterController cc;
-    public float moveSpeed = 3.0f;
+    // public float moveSpeed = 3.0f;
     Animator myAnim;
     PhotonView pv;
     Vector3 myPos;
     Quaternion myRot;
     Vector3 myPrevPos;
+    bool isShaking = false;
 
     float mx = 0;
-    float rotSpeed = 300;
+    // float rotSpeed = 300;
 
 
     void Start()
     {
         pv = GetComponent<PhotonView>();
         myPrevPos = transform.position;
+
+        // 현재 체력을 초기화한다.
+        currentHealth = maxHealth;
+
+        // 레이어를 변경한다.
+        gameObject.layer = pv.IsMine ? LayerMask.NameToLayer("Player") : LayerMask.NameToLayer("Enemy");
+
+        playerState = PlayerState_.RUN;
     }
     void Update()
     {
-        Move();
-        Rotate();
+        if(playerState == PlayerState_.RUN)
+        {
+            Move();
+            Rotate();
+        }
     }
 
     void Move()
@@ -125,5 +141,79 @@ public class PlayerMove : MonoBehaviour,IPunObservable // i는 인터페이스니까 여�
             //h = inputValue.x;
             //v = inputValue.y;
         }
+    }
+
+    public void RPC_TakeDamege(float dmg, int viewID)
+    {
+        pv.RPC("TakeDamge", RpcTarget.All, dmg, viewID);
+    }
+
+    [PunRPC]
+    public void TakeDamage(float dmg, int veiwID)
+    {
+ 
+        currentHealth = Mathf.Max(currentHealth - dmg, 0);
+        healthUI.SetHpValue(currentHealth, maxHealth);
+
+        if(currentHealth > 0)
+        {
+            // 피격 효과 처리
+            // 카메라를 흔드는 효과를 준다.
+            if (!isShaking && pv.IsMine)
+            {
+                StartCoroutine(ShakeCamera(5, 20, 0.3f));
+            }
+
+        }
+        else
+        {
+            // 죽음 처리
+            DieProcess();
+        }
+    }
+
+    IEnumerator ShakeCamera(float amplitude, float frequency, float duration)
+    {
+        isShaking = true;
+        // duration만큼 Perlin Noise의 값을 가져와서 그 만큼 x축과 y축을 회전시킨다.
+        float currentTime = 0;
+        float delayTime = 1.0f / frequency;
+        Quaternion originRot = Camera.main.transform.localRotation;
+
+        while(currentTime < duration)
+        {
+            float range1 = Mathf.PerlinNoise1D(currentTime) - 0.5f;
+            float range2 = Mathf.PerlinNoise1D(duration -currentTime) - 0.5f;
+            float xRot = range1 * shakePower.x * amplitude;
+            float yRot = range2 * shakePower.y * amplitude;
+
+            Camera.main.transform.Rotate(xRot, yRot, 0);
+
+            yield return new WaitForSeconds(delayTime);
+            currentTime += delayTime;
+        }
+
+        Camera.main.transform.localRotation = originRot;
+        isShaking = false;
+    }
+
+    void DieProcess()
+    {
+        if (pv.IsMine)
+        {
+            // 화면을 흑백으로 처리한다.
+            Volume currentVolume = FindAnyObjectByType<Volume>();
+            ColorAdjustments postColor;
+            currentVolume.profile.TryGet<ColorAdjustments>(out postColor);
+            postColor.saturation.value = -100000;
+        }
+
+        // 죽은 애니메이션을 실행한다.
+        myAnim.SetTrigger("DIE");
+        // 콜라이더를 비활성화 한다.
+        GetComponent<CapsuleCollider>().enabled = false;
+        // 움직임을 죽음 상태로 전환한다.
+        playerState = PlayerState_.DIE;
+        // 애니메이션이 끝나면 플레이어를 제거한다.
     }
 }

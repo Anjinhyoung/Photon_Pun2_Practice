@@ -33,7 +33,7 @@ public class ConnectionManager : MonoBehaviourPunCallbacks
         {
             PhotonNetwork.GameVersion = "1.0.0";
             PhotonNetwork.NickName = LobbyUIController.lobbyUI.input_nickName.text;
-            PhotonNetwork.AutomaticallySyncScene = true; // 자동으로 싱크를 맞춘다(방장의 Scene을 기준...)
+            PhotonNetwork.AutomaticallySyncScene = true; // 자동으로 싱크를 맞춘다(방장의 Scene을 기준...  ex: 물건 배치 같은 거) 
 
             // 네임 서버에 관한 요청  (네임 서버에서 마스터 서버는 알아서 해준다.) 
             PhotonNetwork.ConnectUsingSettings();
