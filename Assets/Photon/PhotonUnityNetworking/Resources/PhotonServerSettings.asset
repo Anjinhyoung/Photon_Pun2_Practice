@@ -16,10 +16,10 @@ MonoBehaviour:
     AppIdRealtime: 1ed8449f-1428-4b8b-bac9-7c9c679e6e9b
     AppIdFusion: 
     AppIdChat: 
-    AppIdVoice: 
-    AppVersion: 
+    AppIdVoice: ebb0aa3c-dffa-492f-bb25-44465bb53282
+    AppVersion: 1.0.0
     UseNameServer: 1
-    FixedRegion: 
+    FixedRegion: kr
     Server: 
     Port: 0
     ProxyServer: 
@@ -28,21 +28,24 @@ MonoBehaviour:
     AuthMode: 0
     EnableLobbyStatistics: 0
     NetworkLogging: 1
-  DevRegion: hk
+  DevRegion: kr
   PunLogging: 0
   EnableSupportLogger: 0
   RunInBackground: 1
   StartInOfflineMode: 0
   RpcList:
+  - CantHearYou
+  - ChangeColour
   - ClickRpc
   - DestroyRpc
+  - HeresWhy
   - DestroySpaceship
-  - Fire
-  - RespawnSpaceship
   - DropMyWeapon
+  - Fire
   - GetWeapon
-  - TakeDamage
+  - RespawnSpaceship
   - SwitchEnabledCollider
+  - TakeDamage
   DisableAutoOpenWizard: 1
   ShowSettings: 1
-  DevRegionSetOnce: 1
+  DevRegionSetOnce: 0

@@ -4,13 +4,14 @@ using UnityEngine;
 using Photon.Pun;
 
 //   플레이어의 부착
-public class PlayerFire : MonoBehaviourPun // MonoBehaviourPun은  Photon View를 사용할 수 있다. 그냥 PhotonView는 Rpc 함수는 없다. 
+public class PlayerFire : MonoBehaviourPun, IPunObservable // MonoBehaviourPun은  Photon View를 사용할 수 있다. 그냥 PhotonView는 Rpc 함수는 없다. 
 {
     public Transform[] sockets;
     public WeaponInfo myWeapon;
     public Animator anim;
 
     PlayerUI playerUI;
+    int weaponNumber = -1;
     void Start()
     {
         myWeapon.weaponType = WeaponType.None; // int로 하고 싶다면 int 형 자료형에다가 명시적 변환을 한 후에 해야 한다.
@@ -83,44 +84,77 @@ public class PlayerFire : MonoBehaviourPun // MonoBehaviourPun은  Photon View를 
             data.DropWeapon(myWeapon);
         }
 
-        photonView.RPC("DropMyWeapon", RpcTarget.All);
+        photonView.RPC("DropMyWeapon", RpcTarget.AllBuffered);
     }
 
     [PunRPC]
     void DropMyWeapon()
     {
         // 무기 상태(myWeapon 변수)를 초기화 한다.
-        myWeapon = new WeaponInfo();
-        UIManager.main_ui.SetWeaponInfo(myWeapon);
+        if (photonView.IsMine)
+        {
+            myWeapon = new WeaponInfo();
+            UIManager.main_ui.SetWeaponInfo(myWeapon);
+        }
 
         anim.SetBool("GetPistol", false);
-        anim.SetBool("GetRifle", false);
-            
+        anim.SetBool("GetRifle", false);    
     }
 
 
     public void RPC_GetWeapon(int ammo, float attackPower, float range, int weaponType)
     {
-        photonView.RPC("GetWeapon", RpcTarget.All, ammo, attackPower, range, weaponType);
+        photonView.RPC("GetWeapon", RpcTarget.AllBuffered, ammo, attackPower, range, weaponType);
     }
 
 
     [PunRPC]
     public void GetWeapon(int ammo, float attackPower, float range, int weaponType)
     {
-        myWeapon.SetInformation(ammo, attackPower, range, (WeaponType)weaponType);
-
-        UIManager.main_ui.SetWeaponInfo(myWeapon);
-        if(myWeapon.weaponType == WeaponType.PistolType)
+        if (photonView.IsMine)
         {
-            anim.SetBool("GetPistol", true);
-            anim.SetBool("GetRifle", false);
+            myWeapon.SetInformation(ammo, attackPower, range, (WeaponType)weaponType);
+            UIManager.main_ui.SetWeaponInfo(myWeapon);
+
+            if (myWeapon.weaponType == WeaponType.PistolType)
+               {
+                   anim.SetBool("GetPistol", true);
+                   anim.SetBool("GetRifle", false);
+               }
+
+               else if(myWeapon.weaponType == WeaponType.RifleType)
+               {
+                   anim.SetBool("GetRifle", true);
+                   anim.SetBool("GetPistol", false);
+               }
         }
 
-        else if(myWeapon.weaponType == WeaponType.RifleType)
+        else
         {
-            anim.SetBool("GetRifle", true);
-            anim.SetBool("GetPistol", false);
+            if (weaponType == 0)
+            {
+                anim.SetBool("GetPistol", true);
+                anim.SetBool("GetRifle", false);
+            }
+
+            else if (weaponType == 1)
+            {
+                anim.SetBool("GetRifle", true);
+                anim.SetBool("GetPistol", false);
+            }
+        }
+    }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext((int)myWeapon.weaponType);
+        }
+
+        else if (stream.IsReading)
+        {
+            weaponNumber = (int)stream.ReceiveNext();
         }
     }
 }

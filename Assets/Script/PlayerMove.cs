@@ -5,6 +5,8 @@ using Photon.Pun;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using System;
+using Photon.Voice.PUN;
+using UnityEngine.UI;
 
 public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// i는 인터페이스니까 여기서 구현하고 있는 함수를 구현해야  한다. 
 {
@@ -12,6 +14,7 @@ public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// 
     public float trackingSpeed = 3;
     PlayerUI healthUI;
     public Vector3 shakePower;
+    public RawImage voiceIcon;
 
     CharacterController cc;
     // public float moveSpeed = 3.0f;
@@ -22,6 +25,10 @@ public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// 
     Vector3 myPrevPos;
     bool isShaking = false;
 
+    PhotonVoiceView voiceView;
+    bool isTalking = false;
+    float hpSync = 0;
+
     float mx = 0;
     // float rotSpeed = 300;
 
@@ -30,6 +37,7 @@ public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// 
     {
         pv = GetComponent<PhotonView>();
         myPrevPos = transform.position;
+        voiceView = GetComponent<PhotonVoiceView>();
 
         // 현재 체력을 초기화한다.
         currentHealth = maxHealth;
@@ -45,6 +53,23 @@ public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// 
         {
             Move();
             Rotate();
+        }
+
+        if (pv.IsMine)
+        {
+            // 현재 말을 하고 있다면 보이스 아이콘을 활성화한다.
+            voiceIcon.transform.gameObject.SetActive(voiceView.IsRecording);
+        }
+        else
+        {
+            voiceIcon.gameObject.SetActive(isTalking);
+
+            // 현재 체력을 동기한다.
+            if(currentHealth != hpSync)
+            {
+                healthUI.SetHpValue(currentHealth, maxHealth);
+                  currentHealth = hpSync;
+            }
         }
     }
 
@@ -131,6 +156,8 @@ public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// 
             // itreable 데이터를 보낸다.
             stream.SendNext(transform.position);
             stream.SendNext(transform.rotation);
+            stream.SendNext(voiceView.IsRecording);
+            stream.SendNext(currentHealth);
         }
         // 그렇지 않고, 만일 데이터를 서버로부터 읽어오는  상태라면...
         else if (stream.IsReading)
@@ -140,12 +167,14 @@ public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// 
             //Vector2 inputValue = (Vector2)stream.ReceiveNext();
             //h = inputValue.x;
             //v = inputValue.y;
+            isTalking = (bool)stream.ReceiveNext();
+            hpSync = (float)stream.ReceiveNext();   
         }
     }
 
     public void RPC_TakeDamege(float dmg, int viewID)
     {
-        pv.RPC("TakeDamge", RpcTarget.All, dmg, viewID);
+        pv.RPC("TakeDamge", RpcTarget.AllBuffered, dmg, viewID);
     }
 
     [PunRPC]
