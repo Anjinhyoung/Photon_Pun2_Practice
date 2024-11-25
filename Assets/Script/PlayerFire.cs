@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
+using UnityEngine.SceneManagement;
 
 //   플레이어의 부착
 public class PlayerFire : MonoBehaviourPun, IPunObservable // MonoBehaviourPun은  Photon View를 사용할 수 있다. 그냥 PhotonView는 Rpc 함수는 없다. 
@@ -15,7 +16,10 @@ public class PlayerFire : MonoBehaviourPun, IPunObservable // MonoBehaviourPun은
     void Start()
     {
         myWeapon.weaponType = WeaponType.None; // int로 하고 싶다면 int 형 자료형에다가 명시적 변환을 한 후에 해야 한다.
-        UIManager.main_ui.SetWeaponInfo(myWeapon);
+        if(SceneManager.GetActiveScene().buildIndex == 2)
+        {
+            UIManager.main_ui.SetWeaponInfo(myWeapon);
+        }
 
         playerUI = GetComponentInChildren<PlayerUI>();
 
@@ -31,7 +35,7 @@ public class PlayerFire : MonoBehaviourPun, IPunObservable // MonoBehaviourPun은
     void Update()
     {
 
-        if(Input.GetMouseButtonDown(0) && myWeapon.weaponType != WeaponType.None)
+        if(Input.GetMouseButtonDown(0) && photonView.IsMine && myWeapon.weaponType != WeaponType.None)
         {
             Fire();
         }
@@ -111,9 +115,10 @@ public class PlayerFire : MonoBehaviourPun, IPunObservable // MonoBehaviourPun은
     [PunRPC]
     public void GetWeapon(int ammo, float attackPower, float range, int weaponType)
     {
+        myWeapon.SetInformation(ammo, attackPower, range, (WeaponType)weaponType);
+
         if (photonView.IsMine)
         {
-            myWeapon.SetInformation(ammo, attackPower, range, (WeaponType)weaponType);
             UIManager.main_ui.SetWeaponInfo(myWeapon);
 
             if (myWeapon.weaponType == WeaponType.PistolType)

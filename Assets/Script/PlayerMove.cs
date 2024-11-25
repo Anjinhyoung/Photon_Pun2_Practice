@@ -7,6 +7,7 @@ using UnityEngine.Rendering.Universal;
 using System;
 using Photon.Voice.PUN;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// i는 인터페이스니까 여기서 구현하고 있는 함수를 구현해야  한다. 
 {
@@ -28,6 +29,7 @@ public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// 
     PhotonVoiceView voiceView;
     bool isTalking = false;
     float hpSync = 0;
+    bool requestLoadLevel = false;
 
     float mx = 0;
     // float rotSpeed = 300;
@@ -67,9 +69,14 @@ public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// 
             // 현재 체력을 동기한다.
             if(currentHealth != hpSync)
             {
+                currentHealth = hpSync;
                 healthUI.SetHpValue(currentHealth, maxHealth);
-                  currentHealth = hpSync;
             }
+        }
+    
+        if(!requestLoadLevel && SceneManager.GetActiveScene().buildIndex == 1)
+        {
+            StartCoroutine(GoMainScene());
         }
     }
 
@@ -235,6 +242,11 @@ public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// 
             ColorAdjustments postColor;
             currentVolume.profile.TryGet<ColorAdjustments>(out postColor);
             postColor.saturation.value = -100000;
+
+            if (pv.IsMine)
+            {
+                UIManager.main_ui.btn_leave.gameObject.SetActive(true);
+            }
         }
 
         // 죽은 애니메이션을 실행한다.
@@ -244,5 +256,19 @@ public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// 
         // 움직임을 죽음 상태로 전환한다.
         playerState = PlayerState_.DIE;
         // 애니메이션이 끝나면 플레이어를 제거한다.
+    }
+
+    IEnumerator GoMainScene()
+    {
+        int currentPlayers = PhotonNetwork.CurrentRoom.PlayerCount;
+        int maxPlayers = PhotonNetwork.CurrentRoom.MaxPlayers;
+
+        if (PhotonNetwork.IsMasterClient && pv.IsMine && currentPlayers == maxPlayers)
+        {
+            requestLoadLevel = true; // 한 번만 요청하도록
+            yield return new WaitForSeconds(2.0f);
+
+            PhotonNetwork.LoadLevel(2); // masterClient만 loadLevel을 해도 다른 유저들도 다 같이 따라와진다 
+        }
     }
 }
