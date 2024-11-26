@@ -8,6 +8,7 @@ using System;
 using Photon.Voice.PUN;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
 
 public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// i는 인터페이스니까 여기서 구현하고 있는 함수를 구현해야  한다. 
 {
@@ -51,7 +52,7 @@ public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// 
     }
     void Update()
     {
-        if(playerState == PlayerState_.RUN)
+        if(playerState == PlayerState_.RUN && !EventSystem.current.alreadySelecting)
         {
             Move();
             Rotate();
