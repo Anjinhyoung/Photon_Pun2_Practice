@@ -81,7 +81,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         text_playerList.text = masterName + "\n";
         foreach (string name in playerNames)
         {
-            text_playerList.text += name + "\n";
+            text_playerList.text += name + "\n"; 
         }
     }
 

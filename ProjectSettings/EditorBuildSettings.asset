@@ -12,6 +12,6 @@ EditorBuildSettings:
     path: Assets/Scenes/waitingRoom.unity
     guid: 817191ff10446c14a831d2cb504056b4
   - enabled: 1
-    path: Assets/Scenes/mainScene.unity
+    path: Assets/Scenes/mainScene_02.unity
     guid: 99c9720ab356a0642a771bea13969a05
   m_configObjects: {}

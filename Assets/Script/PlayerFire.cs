@@ -45,6 +45,11 @@ public class PlayerFire : MonoBehaviourPun, IPunObservable // MonoBehaviourPun은
             RPC_DropWeapon();
         }
 
+        // 만일, 마우스 우측 버튼을 눌렀다면, 총알 오브젝트를 생성한다.
+        if (Input.GetMouseButtonDown(1) && photonView.IsMine)
+        {
+            FireType2();
+        }
     }
 
     void Fire()
@@ -76,7 +81,11 @@ public class PlayerFire : MonoBehaviourPun, IPunObservable // MonoBehaviourPun은
         UIManager.main_ui.SetWeaponInfo(myWeapon);
     }
 
-
+    void FireType2()
+    {
+        // 생성 위치는 나의 정면 1미터 앞쪽 
+        PhotonNetwork.Instantiate("Bullet", transform.position + transform.forward, transform.rotation);
+    }
 
     void RPC_DropWeapon()
     {

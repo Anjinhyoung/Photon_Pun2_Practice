@@ -52,7 +52,7 @@ public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// 
     }
     void Update()
     {
-        if(playerState == PlayerState_.RUN && !EventSystem.current.alreadySelecting)
+        if(playerState == PlayerState_.RUN && !EventSystem.current.currentSelectedGameObject == null)
         {
             Move();
             Rotate();
@@ -269,6 +269,7 @@ public class PlayerMove : PlayerState, IPunObservable , IInteractionInterface// 
             requestLoadLevel = true; // 한 번만 요청하도록
             yield return new WaitForSeconds(2.0f);
 
+            // 방에 설정된 맵 번호에 맞는 씬으로 이동 하기
             PhotonNetwork.LoadLevel(2); // masterClient만 loadLevel을 해도 다른 유저들도 다 같이 따라와진다 
         }
     }

@@ -81,6 +81,7 @@ public class ChatManager : MonoBehaviourPun, IOnEventCallback
                 object[] receiveObjects = (object[])photonEvent.CustomData;
                 string receiveMessage = $"\n[{receiveObjects[2].ToString()}] {receiveObjects[0].ToString()} : {receiveObjects[1].ToString()}";
 
+
                 text_chatContent.text += receiveMessage;
 
                 input_chat.text = "";
